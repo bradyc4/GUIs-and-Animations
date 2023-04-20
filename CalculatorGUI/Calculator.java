@@ -15,7 +15,8 @@ import javax.swing.JTextField;
 It has two buttons, "Calculate", and "Reset." 
 Once an Expression has been entered into the textbox, the user can hit Calculate to get a result.
 In order to reset the calculator back to 0.0, the user must hit the reset button.
-The Calculator uses an expression evaluator object from the ExprEvaluator Class which reads an expression from left to right.
+The Calculator uses an expression evaluator object from the ExprEvaluator Class 
+which reads an expression from left to right.
 */
 
 public class Calculator extends JFrame implements ActionListener  
@@ -71,6 +72,7 @@ public class Calculator extends JFrame implements ActionListener
                
                JTextArea instructions = new JTextArea(" This program is a Calculator that creates a GUI for the user to use.\n It has two buttons, \"Calculate\", and \"Reset.\" \n Once an Expression has been entered into the textbox,\n the user can hit Calculate to get a result.\n In order to reset the calculator back to 0.0,\n the user must hit the reset button.\n The Calculator uses an expression evaluator object from the ExprEvaluator Class\n which reads an expression from left to right.\n ");
                
+               //add the textarea to the panel
                instrPanel.add(instructions);
         
       
@@ -102,51 +104,57 @@ public class Calculator extends JFrame implements ActionListener
       add(buttonPanel, BorderLayout.CENTER);
    }
 
+   // implementation of the actionPerformed method from the ActionListener interface
+   public void actionPerformed(ActionEvent e)
+   {
+      try
+      {
+         assumingCorrectNumberFormats(e);
+      }
+      catch (NumberFormatException e2)
+      {
+         ioField.setText("Error: reenter value"); // When the user inputs an unacceptable string, an exception is thrown
+      }
+   }
 
-     public void actionPerformed(ActionEvent e)
-     {
-        try
-        {
-           assumingCorrectNumberFormats(e);
-        }
-        catch (NumberFormatException e2)
-        {
-           ioField.setText("Error: reenter value");
-        }
-     }
-
-     public void assumingCorrectNumberFormats(ActionEvent e)
-     {
-       ExprEvaluator eval;
-       String actionCommand = e.getActionCommand();
-       if(actionCommand.equals("Calculate"))
-       {
-         eval = new ExprEvaluator(ioField.getText()); 
-         answer = eval.evaluator();
-         if(answer == (double)Math.round(answer))
+   /* This method is called when the user clicks a button on the interface. 
+   It determines which button the user selected by checking the action command.*/
+   public void assumingCorrectNumberFormats(ActionEvent e)
+   {
+      String actionCommand = e.getActionCommand();
+      
+      /*If the user clicks the Calculate button, an Expression Evaluator object is created 
+      and the text from the input field is passed as a parameter in the constructor.*/
+      if(actionCommand.equals("Calculate"))
+      {
+         ExprEvaluator eval = new ExprEvaluator(ioField.getText()); 
+         answer = eval.evaluator(); //The answer is calculated, this method call is where an exception might be thrown if the user has typed in an indecipherable string 
+         if(answer == (double)Math.round(answer))// checks if the answer is a whole number
          {
-          answerField.setText(Integer.toString((int)answer));
+            answerField.setText(Integer.toString((int)answer)); // This simply gets rid of the decimal point and zero if the answer is a whole number. Example: 4.0 becomes 4
          }
          else
          {
-          answerField.setText(Double.toString(answer));
+            answerField.setText(Double.toString(answer)); // If the answer is not a whole number, display as is
          }
-       }
-       else if(actionCommand.equals("Reset"))
-       {
-          answer = 0.0;
-          answerField.setText("0.0");
-       }
-       else
-          answerField.setText("error");
-     }
-
-     private static double stringToDouble(String stringObject)
-     {
-        return Double.parseDouble(stringObject.trim());
-     }
-     
-      public static void p(Object s){
-         System.out.println(s);
       }
+      // If the user clicks the Reset button, the answer variable is reset to 0, and so is the answer text field.
+      else if(actionCommand.equals("Reset"))
+      {
+         answer = 0.0;
+         answerField.setText("0.0");
+      }
+      else
+         answerField.setText("error");
+   }
+
+   // converts a string to a double
+   private static double stringToDouble(String stringObject){
+      return Double.parseDouble(stringObject.trim());
+   }
+   
+   // method for debugging
+   public static void p(Object s){
+      System.out.println(s);
+   }
 }
