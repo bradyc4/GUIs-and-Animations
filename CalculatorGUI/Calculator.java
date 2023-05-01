@@ -127,7 +127,7 @@ public class Calculator extends JFrame implements ActionListener
       and the text from the input field is passed as a parameter in the constructor.*/
       if(actionCommand.equals("Calculate"))
       {
-         ExprEvaluator2 eval = new ExprEvaluator2(ioField.getText()); 
+         ExprEvaluator eval = new ExprEvaluator(ioField.getText()); 
          answer = eval.evaluator(); //The answer is calculated, this method call is where an exception might be thrown if the user has typed in an indecipherable string 
          if(answer == (double)Math.round(answer))// checks if the answer is a whole number
          {

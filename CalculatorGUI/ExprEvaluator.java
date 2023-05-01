@@ -1,89 +1,96 @@
-import java.util.Scanner;
+import java.util.Stack;
 
 public class ExprEvaluator
 {
-    Scanner kb = new Scanner(System.in);
-    private static Stack1gen<Character> stack_characters = new Stack1gen<Character>();
-    private static Stack1gen<Double> stack_numbers = new Stack1gen<Double>();
+    private static Stack<Character> stack_operators = new Stack<Character>();
+    private static Stack<Double> stack_numbers = new Stack<Double>();
+    private static char charAt_i;
+    private static String e;
+    private static int i, parCount;
+    private static boolean wasNumber, wasOperator, wasLeft, wasRight;
 
-    private static void eval()
-    {
-        char op = stack_characters.pop();
-        double val = 0.0;
+    public static void p(Object s){
+        System.out.println(s);
+    }
+    
+    public static void eval(){
+        char char_operator = stack_operators.pop();
+        double double_value = 0.0;
         double opnd2 = stack_numbers.pop();
         double opnd1; 
-        if(stack_numbers.getSize()>0)
+        if(!stack_numbers.empty()){
             opnd1 = stack_numbers.pop();
-        else
+        }
+        else{
             opnd1 = 0;
-        switch (op)
+        }
+        switch (char_operator)
         {
             case '+':
-                val = opnd1 + opnd2;
+                double_value = opnd1 + opnd2;
                 break;
             case '-':
-                val = opnd1 - opnd2;
+                double_value = opnd1 - opnd2;
                 break;
             case '*':
-                val = opnd1 * opnd2;
+                double_value = opnd1 * opnd2;
                 break;
             case '/':
-                val = opnd1/opnd2;
+                double_value = opnd1 / opnd2;
                 break;
             case '^':
-                val = Math.pow(opnd1,opnd2);
+                double_value = Math.pow(opnd1,opnd2);
                 break;
             case '(':
-                val = opnd2;
+                double_value = opnd2;
+                stack_numbers.push(opnd1);
+                stack_operators.push(char_operator);
                 break;
         }
-        stack_numbers.push(val);
+        stack_numbers.push(double_value);
     }
 
-    private static void evalDown()
-    {
-        do
-        {
-            eval();
-        }while((stack_characters.getSize()>0) && (stack_characters.getTop() != '('));
-        if((stack_characters.getSize()>0) && (stack_characters.getTop() == '('))
-        {
-            stack_characters.pop();
+    public static void evalDown(){
+        if(parCount<=0){
+            p(1);
+            throw new NumberFormatException();
         }
+        do{
+            eval();
+        }while(stack_operators.peek() != '(');
+        parCount--;
+        stack_operators.pop();
     }
 
-    private static boolean prec(char token, Stack1gen<Character> StackA)
-    {
-        char topOp = StackA.getTop();
-        // checks if the current token in hand is a higher tier operator than the one at the top of the stack(which would be next in line)
-        if((   ((token == '*')||(token == '/')) && ((topOp == '+')||(topOp == '-'))   )||(   (token == '^')&&((topOp=='*')||(topOp=='/')||(topOp=='+')||(topOp=='-'))   ))
-        {
+    public static boolean prec(){
+        char topOp = stack_operators.peek(); // add a condition for detecting (
+        if(topOp == '(' || (   (charAt_i == '*'||charAt_i == '/') && (topOp == '+'||topOp == '-')   )||(   charAt_i == '^'&&(topOp=='*'||topOp=='/'||topOp=='+'||topOp=='-')   )){
             return true;
         }
-        else
-        {
-            if((((topOp == '*')||(topOp == '/'))&&((token == '+')||(token == '-')))||((topOp == '^')&&((token=='*')||(token=='/')||(token=='+')||(token=='-'))))
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
+        else{
+            return false;
         }
     }
 
-    private String e; //the expression as a string
-    private int i; // pointer or index
     public ExprEvaluator()
     {
         i = 0;
+        parCount = 0;
+        wasNumber=false;
+        wasOperator=false;
+        wasLeft=false;
+        wasRight=false;
     }
 
     public ExprEvaluator(String ee)
     {
         e = ee;
         i = 0;
+        parCount = 0;
+        wasNumber=false;
+        wasOperator=false;
+        wasLeft=false;
+        wasRight=false;
     }
 
     public void setExpression(String ee)
@@ -95,137 +102,114 @@ public class ExprEvaluator
         return e;
     }
 
-    public double formNum()
-    {
+    public static double formNum(boolean isPositive){
+        if(wasNumber){
+            p(2);
+            throw new NumberFormatException();
+        }
+        wasOperator = wasLeft = wasRight = false;
+        wasNumber = true;
         double total = 0.0;
-        int count = 0;
-        int decimal_flag = 0;
         double mult = 1.0;
-        char charAt_i,d;
-        boolean space = false;
-        boolean neg = false;
-        
-        d = e.charAt(i);
-        do
-        {
-            p(1);
-            charAt_i = e.charAt(i);
-            if(charAt_i=='(' && e.charAt(i+1)=='-'){
-                p(2);
-                neg = true;
+        int count = 0;
+        boolean decimal_flag = false;
+
+        do{
+            if(charAt_i == '.'){
+                decimal_flag = true;
             }
-            else if(charAt_i==' '){
-                p(3);
-                space = true;
-                if(d=='.'){
-                    throw new NumberFormatException();
-                }
-            }
-            else if(charAt_i == '.'){
-                p(4);
-                if(space==true){
-                    p(5);
-                    System.exit(1);
-                }
-                decimal_flag = 1;
-            }
-            else if((charAt_i >= '0') && (charAt_i<= '9')){
-                p(7);
-                if(space==true){
-                    p(8);
-                    System.exit(1);
-                }
-                p("total = "+total);
-                p("total = ("+total+"*10)+("+charAt_i+"-'0');");
-                /*we multiply the total by 10 because when we are adding something after the decimal place, 
-                we need it to add in the ones place, otherwise adding a .4 to 3.0 would result in 7.0 instead of 3.4 */
+            else{
                 total = (total*10)+(charAt_i-'0');
-                p("total = "+total);
-                if(decimal_flag == 1){
-                    p(9);
+                if(decimal_flag){
                     count++;
                 }
             }
             i++;
-            d = '?';
             if(i<e.length()){
-                p(10);
-                d = charAt_i;
+                charAt_i = e.charAt(i);
             }
-        } while((i<e.length()) && (((d<='9')&&(d>='0'))||(d=='.')));
+        } while(i<e.length() && (( charAt_i<='9' && charAt_i>='0' )|| charAt_i=='.'));
 
-        if(decimal_flag==1)
-        {
+        if(e.charAt(i-1)=='.'){
+            p(3);
+            throw new NumberFormatException();
+        }
+        if(decimal_flag){
             total = total/Math.pow(10.0,count*1.0);
         }
-        if(neg)
-        {
-            p("total is");
-            p(-total);
-            return -total;
-        }
-        else
-        {
-            p("total is");
-            p(total);
+         // i has to be decremented so that it's back in place to be incremented in the main method
+        if(isPositive){
+            i--;
             return total;
+        }
+        else{
+            if(e.charAt(i)==')'){
+                return -total;
+            } else {
+                p(4);
+                throw new NumberFormatException();
+            }
         }
     }
     
     public double evaluator()
     {
-        char token;                 //Initialize the token char variable
-        do                          //start the do-while loop
-        {
-            token = e.charAt(i);    //take the char at i and assign it to the token variable
-            if(token==' ')          //if the token at the index is space, advance the index forward
-                i++;
-            else if(token == '(')   //if the token is (, push the token onto the stack_characters character stack
-            {
-                stack_characters.push(token);
+        while(i<e.length()){
+            charAt_i = e.charAt(i);
+
+            if(charAt_i == '('){
+                if(e.charAt(i+1)=='-'){
+                    i = i+2;
+                    charAt_i = e.charAt(i);
+                    stack_numbers.push(formNum(false));
+                } else if(wasNumber || (i>0 && wasRight) || i>=e.length()-2){
+                    p(5);
+                    throw new NumberFormatException();
+                } else {
+                    stack_operators.push(charAt_i); // This is pushing the '(' operator
+                    parCount++;
+                    wasLeft = true;
+                    wasRight = wasNumber = wasOperator = false;
+                }
             }
-            else if(token == ')' )  //if the token is ), call the evalDown method which...
-            
-            {
+            else if(charAt_i == ')' ){
+                if(i<=1 || wasOperator || wasLeft){
+                    p(6);
+                    throw new NumberFormatException();
+                }
                 evalDown();
-                i++;
             }
-            else if((token=='+')||(token=='-')||(token=='*')||(token=='/')||(token=='^')) // checks if the token is an operator
-            {
-                p("what in gods name?");
-                /*This if statement checks if the stack_characters stack is empty or the operator in hand is a higher tier operator than the one at the top of the stack (next in line).
-                This means that when we encounter 3 * 3 + 3, the program will push 3 to stack_numbers stack, * to stack_characters stack, 3 to stack_numbers stack, and when it encounters
-                the + operator, it will evalulate, multiplying the two 3's together to make 9 which will then be added to the third 3.*/
-                if((stack_characters.getSize() == 0) || (prec(token, stack_characters) == true))
-                {
-                    stack_characters.push(token);
-                    i++;
+            else if(charAt_i>='0' && charAt_i<='9'){
+                stack_numbers.push(formNum(true));
+            }
+            else if(charAt_i=='+'||charAt_i=='-'||charAt_i=='*'||charAt_i=='/'||charAt_i=='^'){
+                if(wasOperator || i==0 || wasLeft){
+                    p(7);
+                    throw new NumberFormatException();
+                } 
+                else{
+                    while(!stack_operators.empty() && !prec()){
+                        eval();
+                    }
                 }
-                else
-                {
-                    eval();
-                }
-            }
-            /*This checks if the token is a number, if */
-            else if(((token<='9')&&(token>='0'))||(token=='.')||(token=='('))
-            {
-                stack_numbers.push(formNum());
-            }
-            else{
+                stack_operators.push(charAt_i); // This is pushing actual operators
+                wasNumber = wasLeft = wasRight = false;
+                wasOperator = true;
+            } else if(charAt_i!=' '){
+                p(8);
                 throw new NumberFormatException();
             }
-        }while(i<e.length());
-
-        while(stack_characters.getSize()>0)
-        {
+            i++;
+        }
+        if(parCount>0){
+            p(9);
+            throw new NumberFormatException();
+        }
+        while(!stack_operators.empty()){
             eval();
         }
-
         double x = stack_numbers.pop();
+        p(x);
         return x;
-    }
-
-    public void p(Object s){
-        System.out.println(s);
     }
 }
